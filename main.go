@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"github.com/joho/godotenv"
 	"time"
 )
+
+var webhookURL string
 
 type ipAddr struct {
 	Ip string `json:"ip"`
@@ -43,13 +43,12 @@ func getIp() ipAddr {
 }
 
 func sendSlackMsg(newIpAddr ipAddr) {
-	webhookURL := os.Getenv("SLACK_WEBHOOK")
-	payload := slackPayload {
+	payload := slackPayload{
 		Message: newIpAddr.Ip,
 	}
 	jsonData, _ := json.Marshal(payload)
 
-	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData) )
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
 
 	// An error is returned if something goes wrong
 	if err != nil {
@@ -59,7 +58,6 @@ func sendSlackMsg(newIpAddr ipAddr) {
 	//Hence defer close. It will automatically take care of it.
 	defer resp.Body.Close()
 
-	//Check response code, if New user is created then read response.
 	if resp.StatusCode == http.StatusCreated {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -78,10 +76,6 @@ func sendSlackMsg(newIpAddr ipAddr) {
 }
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		fmt.Println("Environment Variables NOT SET")
-	}
 	currentIp := ""
 	for {
 		mostRecentIp := getIp()
